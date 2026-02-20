@@ -1,5 +1,12 @@
 const express = require('express');
 const db = require('../db');
+const {
+  getConfigFromCache,
+  setConfigInCache,
+  deleteConfigFromCache,
+} = require('../cache');
+const { authMiddleware } = require('../auth');
+
 
 const router = express.Router();
 
@@ -8,6 +15,11 @@ router.get('/:key', async (req, res, next) => {
   const env = req.query.env || 'development';
 
   try {
+    const cached = await getConfigFromCache(env, configKey);
+    if (cached) {
+      return res.json(cached);
+    }
+
     const result = await db.query(
       'SELECT key, value, environment, version FROM configs WHERE key = $1 AND environment = $2',
       [configKey, env]
@@ -18,13 +30,16 @@ router.get('/:key', async (req, res, next) => {
     }
 
     const row = result.rows[0];
+
+    await setConfigInCache(env, configKey, row);
+
     return res.json(row);
   } catch (err) {
     next(err);
   }
 });
 
-router.post('/', async (req, res, next) => {
+router.post('/', authMiddleware('admin'), async (req, res, next) => {
   const { key, value, environment } = req.body;
 
   if (!key || !value || !environment) {
@@ -50,7 +65,7 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-router.put('/:key', async (req, res, next) => {
+router.put('/:key', authMiddleware('admin'), async (req, res, next) => {
   const configKey = req.params.key;
   const env = req.query.env || 'development';
   const { value } = req.body;
