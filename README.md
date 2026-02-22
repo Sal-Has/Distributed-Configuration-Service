@@ -1,6 +1,6 @@
 # Distributed Configuration Service
 
-A mini Azure App Configuration–style service built with Node.js, Express, PostgreSQL, Redis, and JWT authentication.
+A lightweight AWS AppConfig–inspired configuration management service built with Node.js, Express, PostgreSQL, Redis caching, and JWT authentication
 
 It provides a centralized API for managing application configuration across multiple environments (development, staging, production), with versioning, caching, and role-based access control.
 
